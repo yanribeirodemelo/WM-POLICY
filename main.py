@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="Maintenance Policy",
-    page_icon="foto2.png",
     layout="wide"
 )
 
@@ -138,7 +137,7 @@ def execute_optimization(n2, b2, cp, cd, cm, cf, q, s, W_max=50, M_max=50):
     return W_opt, M_opt, min_rate, min_unavail, max_rel, list_W, list_M, list_rate, list_unavail, list_rel
 
 # =============================================================================
-# UI COMPONENTS AND MAIN APP
+# UI COMPONENTS
 # =============================================================================
 def display_input_parameters():
     with st.container(border=True):
@@ -178,11 +177,68 @@ def create_3d_plot(x, y, z, z_label, w_min, w_max, m_min, m_max):
     cbar.set_label(z_label, fontsize=10)
     return fig
 
+def plot_policy_timeline(W, M, s):
+    fig, ax = plt.subplots(figsize=(10, 2.5), dpi=150)
+    
+    # Define axes limits
+    ax.set_xlim(-0.5 * s, (M + 0.5) * s)
+    ax.set_ylim(-2.5, 1)
+    ax.axis('off') 
+    
+    # Background shading for phases
+    if W > 0:
+        ax.axvspan(0, W * s, facecolor='#e74c3c', alpha=0.08, label='Corrective Phase')
+    if M > W:
+        ax.axvspan(W * s, M * s, facecolor='#3498db', alpha=0.08, label='Preventive Phase')
 
+    # Draw the base horizontal timeline
+    ax.hlines(0, 0, M * s, color='black', linewidth=1.2)
+    
+    # Draw vertical ticks for each slot up to M
+    for i in range(M + 1):
+        color = 'black'
+        lw = 1.2
+        
+        # Highlight W and M slots
+        if i == W:
+            color = '#e74c3c' 
+            lw = 2.0
+        elif i == M:
+            color = '#3498db' 
+            lw = 2.0
+            
+        # Draw the slot tick
+        ax.vlines(i * s, -0.2, 0.2, color=color, linewidth=lw)
+        
+        # Add text labels for W and M above the line
+        if i == W:
+            ax.text(W * s, 0.4, f'W = {W}', ha='center', va='bottom', color='#e74c3c', fontweight='bold', fontsize=11)
+        if i == M:
+            ax.text(M * s, 0.4, f'M = {M}', ha='center', va='bottom', color='#3498db', fontweight='bold', fontsize=11)
+
+    # Draw dimensional arrows below the timeline
+    if M > 0:
+        ax.annotate('', xy=(0, -0.6), xytext=(s, -0.6), arrowprops=dict(arrowstyle='<->', color='black', lw=1))
+        ax.text(s / 2, -0.9, 's', ha='center', va='top', fontsize=10, fontstyle='italic')
+    
+    if W > 0:
+        ax.annotate('', xy=(0, -1.3), xytext=(W * s, -1.3), arrowprops=dict(arrowstyle='<->', color='#e74c3c', lw=1.2))
+        ax.text((W * s) / 2, -1.6, 'Ws', ha='center', va='top', fontsize=10, fontstyle='italic', color='#e74c3c')
+        
+    if M > 0:
+        ax.annotate('', xy=(0, -2.0), xytext=(M * s, -2.0), arrowprops=dict(arrowstyle='<->', color='#3498db', lw=1.2))
+        ax.text((M * s) / 2, -2.3, 'Ms', ha='center', va='top', fontsize=10, fontstyle='italic', color='#3498db')
+
+    fig.tight_layout()
+    return fig
+
+# =============================================================================
+# MAIN APP
+# =============================================================================
 def main():
     col1, col2, col3 = st.columns([1, 2, 1])
     try:
-        foto = Image.open('logo.png')
+        foto = Image.open('foto.png')
         col2.image(foto, use_column_width=True)
     except:
         pass 
@@ -286,6 +342,11 @@ def main():
             col_res2.metric(label="Average Unavailability", value=f"{round(cost_rate_sim[4], 3)}")
             col_res3.metric(label="Operational Reliability (MTBOF)", value=f"{round(cost_rate_sim[5], 2)}")
 
+            st.markdown("---")
+            st.subheader("Policy Timeline Configuration")
+            fig_timeline = plot_policy_timeline(W, M, s)
+            st.pyplot(fig_timeline)
+
     # =============================================================================
     # MENU 1: OPTIMIZER
     # =============================================================================
@@ -308,8 +369,15 @@ def main():
             col_res1.metric(label="Minimum Cost-rate", value=f"{round(min_rate, 3)}")
             col_res2.metric(label="Average Unavailability", value=f"{round(min_unavail, 3)}")
             col_res3.metric(label="Operational Reliability", value=f"{round(max_rel, 2)}")
+            
+            st.markdown("---")
+            st.subheader("Optimal Policy Timeline")
+            fig_timeline_opt = plot_policy_timeline(W_opt, M_opt, s)
+            st.pyplot(fig_timeline_opt)
     
-            # Local zoom variables for charting
+            st.markdown("---")
+            st.subheader("Optimization Surface")
+
             delta = 5 
             w_min = max(W_opt - delta, 1)
             w_max = min(W_opt + delta, 50)
