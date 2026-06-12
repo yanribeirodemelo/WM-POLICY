@@ -182,7 +182,7 @@ def create_3d_plot(x, y, z, z_label, w_min, w_max, m_min, m_max):
 def main():
     col1, col2, col3 = st.columns([1, 2, 1])
     try:
-        foto = Image.open('foto.png')
+        foto = Image.open('logo.png')
         col2.image(foto, use_column_width=True)
     except:
         pass 
