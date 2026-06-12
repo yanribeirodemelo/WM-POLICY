@@ -238,7 +238,7 @@ def plot_policy_timeline(W, M, s):
 def main():
     col1, col2, col3 = st.columns([1, 2, 1])
     try:
-        foto = Image.open('foto.png')
+        foto = Image.open('logo.png')
         col2.image(foto, use_column_width=True)
     except:
         pass 
